@@ -113,6 +113,9 @@ dependencies {
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
+        implementation "androidx.biometric:biometric:1.2.0-alpha05"
+
+
     } else {
         implementation jscFlavor
     }
