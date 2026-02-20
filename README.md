@@ -1,98 +1,338 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+## MyProject – Biometric Authentication App
 
-# Getting Started
+MyProject is a **React Native** demo application that showcases a **modern, secure login experience** using:
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+- **Email + password authentication**
+- **Biometric authentication** (Fingerprint / Face ID – Android native module)
+- **Local data persistence** with `AsyncStorage`
+- A small, **clean UI** built with React Native components and `lucide-react-native` icons.
 
-## Step 1: Start Metro
+This project is designed so that **anyone opening the code or app can immediately understand the user flow and architecture.**
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+---
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Overview
+
+The app implements a simple but realistic **account and login flow**:
+
+- **Sign Up**: User creates an account with name, email, and password.
+- **Enable Biometrics (optional)**: During sign up, the user can enable biometric login.
+- **Login**: User can log in either:
+  - With **biometrics**, or
+  - With **email + password**.
+- **Home**: Once authenticated, the user lands on a profile-style home screen that shows:
+  - Basic user information
+  - The active login method
+  - Options to **log out** or **delete the account**.
+
+> **Note**: This project is intended as an **educational/demo app**. It stores credentials locally with `AsyncStorage` and does **not** talk to any backend server. Do not use this setup as‑is in production.
+
+---
+
+## Key Features
+
+- **User registration**
+  - Name, email, password, confirm password
+  - Form validation with **Yup** + **Formik**
+  - Local storage of user credentials with `AsyncStorage`
+
+- **Biometric authentication**
+  - Optional biometric setup at sign-up via `BiomatericModule` (custom Android native module)
+  - Toggle component (`BiometricToggle`) with a clear call-to-action
+  - Uses native biometric prompt (fingerprint / face) for authentication
+
+- **Login options**
+  - **Biometric Login**: If biometric login is enabled
+  - **Password Login**: Fallback or alternative via `PasswordLogin` screen
+
+- **Home / Profile screen**
+  - Shows user name and email from storage
+  - Displays the **current login method** (e.g. Biometric)
+  - Provides **Log Out** and **Delete Account** actions
+
+- **Modern UI**
+  - Simple, clean layouts with consistent spacing
+  - Icons from `lucide-react-native`
+  - Custom bottom navigation and prominent biometric FAB on the Home screen
+
+---
+
+## Application Flow (High-Level)
+
+The diagram below shows how a user moves through the app.
+
+```mermaid
+flowchart TD
+    A[App launch] --> B{Existing user data<br/>in AsyncStorage?}
+    B -- No --> C[Sign Up screen<br/>(Sigin)]
+    B -- Yes --> D[Login screen]
+
+    C --> C1[Fill form<br/>name/email/password]
+    C1 --> C2[Optional: Enable biometric<br/>via BiometricToggle]
+    C2 --> C3[Validate with Yup]
+    C3 --> C4[Save userData to AsyncStorage]
+    C4 --> D
+
+    D --> E{Login method?}
+    E -- Biometric --> F[Check biometric flag<br/>+ availability]
+    F --> G[Show native biometric prompt]
+    G -->|Success| H[Save userInfo<br/>(method, timestamp)]
+    H --> I[Home screen]
+    G -->|Fail| D
+
+    E -- Password --> J[PasswordLogin screen]
+    J --> K[Read userData<br/>from AsyncStorage]
+    K --> L{Email & password match?}
+    L -- Yes --> I
+    L -- No --> D
+
+    I --> M[Log Out]
+    I --> N[Delete Account]
+    M --> D
+    N --> O[Clear userData & userInfo] --> C
+```
+
+---
+
+## Screens & Components
+
+- **`App.tsx`**
+  - Sets up `NavigationContainer` and **stack navigation**.
+  - Screens:
+    - `SignUp` → `Sigin` component
+    - `Login` → `Login` component
+    - `Home`  → `Homescreen` component
+
+- **`UI/Sigin.tsx` (Sign Up)**
+  - Handles **user registration** with `Formik` + `Yup`.
+  - Stores user data in `AsyncStorage` via `stooreData` from `Utils/storage.tsx`.
+  - Integrates `BiometricToggle` to allow enabling biometric login.
+  - On success, navigates to the `Login` screen.
+
+- **`UI/Login.tsx` (Biometric / Password selection)**
+  - Default landing for existing users.
+  - Two main actions:
+    - **Login with Biometrics** → triggers `handleBiometricSetup` using `BiomatericModule`.
+    - **Login with Password** → toggles to render the `PasswordLogin` component.
+  - Stores biometric usage details in `AsyncStorage` (`userInfo`).
+
+- **`UI/PasswordLogin.tsx`**
+  - Simple email + password form using `Formik` + `Yup`.
+  - Reads `userData` from `AsyncStorage` with `getData`.
+  - If credentials match, navigates to `Home`.
+
+- **`UI/Home.tsx` (Homescreen)**
+  - Reads `userData` and `userInfo` (login method & last login time) from storage.
+  - Displays:
+    - User avatar (first letter of name)
+    - Email
+    - Current login method (e.g. Biometric + method type)
+  - Actions:
+    - **Log Out** → removes login info and goes back to `Login`.
+    - **Delete Account** → clears stored user data and returns to `SignUp`.
+  - Includes a **bottom navigation** and central biometric FAB.
+
+- **`UI/components/BiometricToggle.tsx`**
+  - Reusable toggle card that visually explains biometric login.
+  - Wraps a `Switch` and icon inside a card-style row.
+
+- **`Utils/storage.tsx`**
+  - `stooreData(value)` → stores minimal user profile in `AsyncStorage` under `userData`.
+  - `getData()` → reads and parses `userData` from `AsyncStorage`.
+
+---
+
+## Architecture & Tech Stack
+
+- **Framework**: `React Native 0.84.0`
+- **Language**: TypeScript (via `@react-native/typescript-config`)
+- **Navigation**: `@react-navigation/native` + `@react-navigation/native-stack`
+- **State & Forms**:
+  - React hooks (`useState`, `useEffect`)
+  - `Formik` for form state
+  - `Yup` for validation
+- **Storage**: `@react-native-async-storage/async-storage`
+- **UI & Icons**:
+  - Core React Native components
+  - `lucide-react-native` icon set
+- **Biometrics (Android)**:
+  - Custom native Kotlin module `BiomatericModule` (under `android/app/src/main/java/com/myproject`)
+
+---
+
+## Getting Started
+
+> **Prerequisite**: Make sure you have completed the official React Native
+> [“Set Up Your Environment” guide](https://reactnative.dev/docs/set-up-your-environment)
+> for your platform (Android and/or iOS).
+
+### 1. Install dependencies
+
+From the project root:
 
 ```sh
-# Using npm
+npm install
+```
+
+### 2. Start the Metro bundler
+
+```sh
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
+### 3. Run the app on a device/emulator (debug)
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+- **Android (debug build)**
 
-### Android
+  **Requirements**:
 
-```sh
-# Using npm
-npm run android
+  - Android Studio installed
+  - Android SDK + at least one Android Virtual Device (AVD) _or_ a physical Android device with USB debugging enabled
 
-# OR using Yarn
-yarn android
-```
+  **Run**:
 
-### iOS
+  ```sh
+  npm run android
+  ```
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+- **iOS (debug build)**  
+  _Only applicable if you add an iOS native biometric module and open the project in Xcode._
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+  **Requirements**:
 
-```sh
-bundle install
-```
+  - Xcode installed (macOS only)
+  - iOS Simulator or a physical iOS device
 
-Then, and every time you update your native dependencies, run:
+  **Run**:
 
-```sh
-bundle exec pod install
-```
+  ```sh
+  npm run ios
+  ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+If everything is set up correctly, the app will launch and show the **Sign Up** or **Login** flow depending on whether `userData` is already present.
 
-```sh
-# Using npm
-npm run ios
+---
 
-# OR using Yarn
-yarn ios
-```
+## Android build (APK / AAB)
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+These steps create installable builds that can be shared or uploaded to the Play Store.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+> **Tip**: Make sure you can run the app in **debug** first before attempting a release build.
 
-## Step 3: Modify your app
+### Generate a signed release APK (quick installable file)
 
-Now that you have successfully run the app, let's make changes!
+1. **Create a keystore** (one-time):
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+   ```sh
+   keytool -genkeypair -v -storetype PKCS12 -keystore myproject-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias myproject
+   ```
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+2. **Move the keystore** into `android/app/` and configure it in:
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+   - `android/gradle.properties` (keystore passwords and alias)
+   - `android/app/build.gradle` (signingConfigs and buildTypes → release)
 
-## Congratulations! :tada:
+3. **Build the release APK** from the project root:
 
-You've successfully run and modified your React Native App. :partying_face:
+   ```sh
+   cd android
+   ./gradlew assembleRelease
+   ```
 
-### Now what?
+4. The APK will be located at:
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+   - `android/app/build/outputs/apk/release/app-release.apk`
 
-# Troubleshooting
+### Generate a signed AAB (Play Store bundle)
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+1. From the `android` folder:
 
-# Learn More
+   ```sh
+   ./gradlew bundleRelease
+   ```
 
-To learn more about React Native, take a look at the following resources:
+2. The AAB file will be located at:
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
-# MyProject
+   - `android/app/build/outputs/bundle/release/app-release.aab`
+
+You can upload this `.aab` to the **Google Play Console** for internal testing or production release.
+
+---
+
+## iOS build (Archive / App Store)
+
+> This project is currently focused on **Android biometrics**.  
+> iOS support requires adding an equivalent biometric native module and configuring Xcode.
+
+Once an iOS native module is in place, you can:
+
+1. Open `ios/MyProject.xcworkspace` in **Xcode**.
+2. Select a **Generic iOS Device** or a physical device as the build target.
+3. From the Xcode menu, choose **Product → Archive**.
+4. Use the **Organizer** window to:
+   - Distribute the app via **TestFlight**, or
+   - Upload to the **App Store**.
+
+---
+
+## Biometric Module Notes
+
+- The project includes a custom Android native module (`BiomatericModule`) responsible for:
+  - Checking biometric availability.
+  - Returning the active biometric method (e.g. fingerprint or face).
+  - Showing the native biometric prompt.
+- The Java/Kotlin code lives under:
+  - `android/app/src/main/java/com/myproject/...`
+- To support **iOS biometrics**, you would need to:
+  - Implement an equivalent native module in Swift/Objective‑C.
+  - Expose similar JS methods as `BiomatericModule`.
+
+---
+
+## Typical User Journey
+
+1. **New user opens the app**
+   - Sees the **Sign Up** screen.
+   - Fills in name, email, password, confirm password.
+   - Optionally enables **biometric login** using the toggle.
+   - Submits and is redirected to the **Login** screen.
+
+2. **User logs in**
+   - Chooses **Login with Biometrics**:
+     - App checks if biometrics are enabled and available.
+     - Shows the native prompt.
+     - On success, saves login info and navigates to **Home**.
+   - Or chooses **Login with Password**:
+     - Enters email and password.
+     - App validates against stored `userData`.
+     - On success, navigates to **Home**.
+
+3. **On the Home screen**
+   - User sees their initials, name, email, and login method.
+   - Can **Log Out** (return to Login) or **Delete Account** (clear local data).
+
+---
+
+## Limitations & Next Steps
+
+- **No backend**: All data is stored locally with `AsyncStorage`. In a real app, you would:
+  - Move user data and authentication to a secure backend.
+  - Use secure tokens (e.g. JWT) and proper encryption.
+- **Biometrics**:
+  - Currently focused on Android with a custom module.
+  - iOS support would require an additional native implementation.
+- **Security**:
+  - Passwords are not encrypted at rest.
+  - This is acceptable for a demo, but not for production.
+
+You can use this project as a **starting point** to integrate:
+
+- Real backend authentication (REST / GraphQL)
+- More robust error handling and logging
+- Multi-factor authentication flows
+
+---
+
+## License
+
+This project is provided as‑is for learning and experimentation. Adapt the license text here as needed for your use case.
