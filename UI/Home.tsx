@@ -36,7 +36,7 @@ const Homescreen = ({ navigation }) => {
         const checkUser = async () => {
             try {
                 const item = await getData("userData")
-                console.log("User data from storage", item);
+                
                 const method = await AsyncStorage.getItem('userInfo');
                 if(item == null){
                     throw new Error("No user data found");
@@ -44,7 +44,7 @@ const Homescreen = ({ navigation }) => {
                 }
                 setUserData(item);
                 setmethod(JSON.parse(method));
-                console.log('method' ,JSON.parse(method))
+                
             } catch (error) {
                 console.log("Error checking biometric setup", error);   
             }
@@ -68,7 +68,7 @@ const Homescreen = ({ navigation }) => {
             
             await AsyncStorage.removeItem('userInfo');
        
-            navigation.replace('Sigin');
+            navigation.replace('Login');
 
         }catch(error){
             Alert.alert("Error", "Failed to log out");

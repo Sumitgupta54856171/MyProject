@@ -114,8 +114,8 @@ try {
         )}
            </Formik>
            
-           <View>
-            <Text>Already have an account?</Text><Button title="Sign In" onPress={() => navigation.navigate('Login')} />
+           <View style={{flexDirection:'row',alignItems:'center',justifyContent:'center'}}>
+            <Text>Already have an account?</Text><TouchableOpacity title="Login" onPress={() => navigation.navigate('Login')} style={{margin:10,padding:10,borderRadius:5,justifyContent:'center',alignItems:'center'}}><Text style={{color: 'blue'}}>Login</Text></TouchableOpacity>
            </View>
         </View>
     )

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect,useState} from 'react';
 import { 
   View, 
   Text, 
@@ -13,28 +13,28 @@ import { ChevronLeft, Fingerprint, Smile, ScanFace, Biohazard, User } from 'luci
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const { BiomatericModule } = NativeModules;
 import { getData } from '../Utils/storage';
+import PasswordLogin from './PasswordLogin';
 const Login = ({ navigation }) => {
-  
-    useEffect(() =>{
+  const [passwordlogin, setPasswordLogin] = useState(false);
+   const [isSettingup,setisSettingup] = useState(false);
+
+    useEffect(()=>{
         const checkBiometricSetup = async () => {
             try {
                 const item = await AsyncStorage.getItem('biometricEnabled');
-                
-                const isEnabled = JSON.parse(item);
-                if (!isEnabled) {
-                    const value = await BiomatericModule.getBiometricMethod();
-                    console.log("Biometric method from native module", value);
-                    const item = await getData("userData");
-                     const userinfo = {
+                 const value = await BiomatericModule.getBiometricMethod();
+                 const userinfo = {
                         name:item.name,
                         method:value,
                         loginData: new Date().toLocaleString()
                      }
                     await AsyncStorage.setItem('userInfo', JSON.stringify(userinfo));
-                    navigation.replace('Home');
+                const isEnabled = JSON.parse(item);
+                if (isEnabled) {
 
+                   handleBiometricSetup();
                 }else{
-                    console.log("Biometric enabled");
+                    setisSettingup(false);
                 }
             } catch (error) {
                 console.log("Error checking biometric setup", error);
@@ -42,7 +42,7 @@ const Login = ({ navigation }) => {
         }
 
         checkBiometricSetup();
-    })
+    },[])
 
      const handleBiometricSetup = async() => {
         
@@ -51,8 +51,8 @@ const Login = ({ navigation }) => {
             if (!result) {
                 Alert.alert("Error", "Biometric is not available");
             }  
-            
-            const success = await BiomatericModule.showBiometricPrompt("Set up biometric authentication", "Use your fingerprint or face to secure your account");
+            setTimeout(async () => {
+                const success = await BiomatericModule.showBiometricPrompt("Set up biometric authentication", "Use your fingerprint or face to secure your account");
             if (success) {
                 navigation.replace('Home')
                 const value = BiomatericModule.getBiometricMethod();
@@ -60,6 +60,8 @@ const Login = ({ navigation }) => {
             } else {
                 Alert.alert("Error", "Failed to set up biometric authentication");
             }
+            }, 400);
+            
 
         }catch(error:any) {
                 Alert.alert("Error", "Failed to check biometric availability",error);
@@ -67,22 +69,20 @@ const Login = ({ navigation }) => {
                 
             }
         }
-
+        
+const handlePasswordLogin = () => {
+   setPasswordLogin(true);
+}
      
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header Section */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
-          <ChevronLeft color="#111827" size={28} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>SECURE LOGIN</Text>
-      </View>
+      
 
       {/* Main Content */}
       <View style={styles.content}>
+        {passwordlogin ? (<PasswordLogin navigation={navigation} /> ):(<>
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Please verify your identity to continue</Text>
 
@@ -109,23 +109,26 @@ const Login = ({ navigation }) => {
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionContainer}>
-          <TouchableOpacity style={styles.primaryButton} activeOpacity={0.8}>
-            <ScanFace color="#FFFFFF" size={20} style={styles.buttonIcon} />
-            <Text style={styles.primaryButtonText}>Login with Biometrics</Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.6}>
+        <View style={styles.actionContainer}>
+            {isSettingup && (
+          <TouchableOpacity style={styles.primaryButton} activeOpacity={0.8}>
+            <ScanFace color="#FFFFFF" size={20} style={styles.buttonIcon} onPress={handleBiometricSetup} />
+            <Text style={styles.primaryButtonText}>Login with Biometrics</Text>
+          </TouchableOpacity>)}
+
+          <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.6} onPress={handlePasswordLogin}>
             <Text style={styles.secondaryButtonText}>Login with Password</Text>
           </TouchableOpacity>
         </View>
+        </>)}
       </View>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity>
-          <Text style={styles.footerText}>Need help accessing your account?</Text>
-        </TouchableOpacity>
+       <View style={{flexDirection:'row',alignItems:'center',justifyContent:'center'}}>
+            <Text>Create a account?</Text><TouchableOpacity title="Login" onPress={() => navigation.navigate('SignUp')} style={{margin:10,padding:10,borderRadius:5,justifyContent:'center',alignItems:'center'}}><Text style={{color: 'blue'}}>Sign Up</Text></TouchableOpacity>
+           </View>
       </View>
     </SafeAreaView>
   );
