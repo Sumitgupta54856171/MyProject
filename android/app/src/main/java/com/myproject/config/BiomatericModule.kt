@@ -25,7 +25,7 @@ class BiomatericModule(reactContext: ReactApplicationContext) : ReactContextBase
             promise.resolve(canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS)
         } catch (e: Exception) {
             Toast.makeText(reactApplicationContext, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            promise.reject("BIOMETRIC_ERROR", "Error: ${e.message}")
+            promise.reject("Error: ${e.message}")
 
 
         }

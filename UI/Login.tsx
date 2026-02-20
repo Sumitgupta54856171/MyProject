@@ -23,24 +23,20 @@ const Login = ({ navigation }) => {
      const handleBiometricSetup = async() => {
         
         try {
-            const item = await AsyncStorage.getItem('biometricEnableds');
+             const isEnable = await BiomatericModule.isBiometricAvailable();
+              console.log(isEnable);
+
+             if(!isEnable){
+              Alert.alert("Biometric is not available")
+             }
              const value =await BiomatericModule.getBiometricMethod();
              const userInfo = {
                 method:value,
                 loggingdate: new Date().toISOString()
              }
              await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
-             if (item === null) {
-                Alert.alert("Error", "Biometric is not available");
-                await AsyncStorage.setItem('biometricEnableds', JSON.stringify(false));
-                return;
-             }
-             const isEnabled = JSON.parse(item);
-             console.log("Biometric enabled status:", isEnabled);
-           
-            if (!isEnabled) {
-                Alert.alert("Error", "Biometric is not available");
-            }  
+             
+              
             if(Platform.OS === 'ios'){
               setTimeout(async () => {
                 
