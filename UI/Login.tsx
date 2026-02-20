@@ -16,39 +16,27 @@ import { getData } from '../Utils/storage';
 import PasswordLogin from './PasswordLogin';
 const Login = ({ navigation }) => {
   const [passwordlogin, setPasswordLogin] = useState(false);
-   const [isSettingup,setisSettingup] = useState(false);
-
-    useEffect(()=>{
-        const checkBiometricSetup = async () => {
-            try {
-                const item = await AsyncStorage.getItem('biometricEnabled');
-                 const value = await BiomatericModule.getBiometricMethod();
-                 const userinfo = {
-                        name:item.name,
-                        method:value,
-                        loginData: new Date().toLocaleString()
-                     }
-                    await AsyncStorage.setItem('userInfo', JSON.stringify(userinfo));
-                const isEnabled = JSON.parse(item);
-                if (isEnabled) {
-
-                   handleBiometricSetup();
-                }else{
-                    setisSettingup(false);
-                }
-            } catch (error) {
-                console.log("Error checking biometric setup", error);
-            }
-        }
-
-        checkBiometricSetup();
-    },[])
+   
 
      const handleBiometricSetup = async() => {
         
         try {
-            const result = await BiomatericModule.isBiometricAvailable();
-            if (!result) {
+            const item = await AsyncStorage.getItem('biometricEnableds');
+             const value =await BiomatericModule.getBiometricMethod();
+             const userInfo = {
+                method:value,
+                loggingdate: new Date().toISOString()
+             }
+             await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
+             if (item === null) {
+                Alert.alert("Error", "Biometric is not available");
+                await AsyncStorage.setItem('biometricEnableds', JSON.stringify(false));
+                return;
+             }
+             const isEnabled = JSON.parse(item);
+             console.log("Biometric enabled status:", isEnabled);
+           
+            if (!isEnabled) {
                 Alert.alert("Error", "Biometric is not available");
             }  
             setTimeout(async () => {
@@ -65,22 +53,16 @@ const Login = ({ navigation }) => {
 
         }catch(error:any) {
                 Alert.alert("Error", "Failed to check biometric availability",error);
-            } finally{
-                
-            }
+            } 
         }
         
 const handlePasswordLogin = () => {
-   setPasswordLogin(true);
+    setPasswordLogin(true);
 }
      
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
-      
-
-      {/* Main Content */}
       <View style={styles.content}>
         {passwordlogin ? (<PasswordLogin navigation={navigation} /> ):(<>
         <Text style={styles.title}>Welcome Back</Text>
@@ -111,11 +93,11 @@ const handlePasswordLogin = () => {
         {/* Action Buttons */}
 
         <View style={styles.actionContainer}>
-            {isSettingup && (
-          <TouchableOpacity style={styles.primaryButton} activeOpacity={0.8}>
-            <ScanFace color="#FFFFFF" size={20} style={styles.buttonIcon} onPress={handleBiometricSetup} />
+           
+          <TouchableOpacity style={styles.primaryButton} activeOpacity={0.8} onPress={handleBiometricSetup}>
+            <ScanFace color="#FFFFFF" size={20} style={styles.buttonIcon}  />
             <Text style={styles.primaryButtonText}>Login with Biometrics</Text>
-          </TouchableOpacity>)}
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.6} onPress={handlePasswordLogin}>
             <Text style={styles.secondaryButtonText}>Login with Password</Text>

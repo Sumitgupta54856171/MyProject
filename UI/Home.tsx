@@ -56,9 +56,9 @@ const Homescreen = ({ navigation }) => {
         await AsyncStorage.removeItem('userData');
         await AsyncStorage.removeItem('userInfo');
         await AsyncStorage.removeItem('biometricEnabled');
-        await AsyncStorage.clear();
+        navigation.replace('SignUp');
          Alert.alert("Success", "User data deleted successfully");
-        navigation.replace('Sigin');
+        
     }catch(error){
         Alert.alert("Error", "Failed to delete user data");
     }

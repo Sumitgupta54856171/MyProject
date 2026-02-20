@@ -27,30 +27,14 @@ const { BiomatericModule } = NativeModules;
 const Sigin = ({navigation}: any) =>{
     const insets = useSafeAreaInsets()
     const [isSettingup,setisSettingup] = useState(false);
-    console.log("check native module",BiomatericModule)
-   useEffect(()=>{
-    const checkBiometricSetup = async () => {
-        try {
-            const item = await AsyncStorage.getItem('biometricEnabled');
-            const isEnabled = JSON.parse(item);
-            if (isEnabled) {
-                navigation.replace('Login');
-            }else{
-                console.log("Biometric not enabled");
-            }
-        } catch (error) {
-            console.log("Error checking biometric setup", error);
-        }
-    }
-
-    checkBiometricSetup();
-})
+   
+  
       const enablebiometric = async () => {
         try {
             const result = await BiomatericModule.isBiometricAvailable();
             if (!result) {
                 Alert.alert("Error", "Biometric is not available");
-                await AsyncStorage.setItem('biometricEnabled', JSON.stringify(false));
+                await AsyncStorage.setItem('biometricEnableds', JSON.stringify(false));
         }else{
             setisSettingup(true);
         }
