@@ -7,13 +7,15 @@ import {
   SafeAreaView, 
   StatusBar,
   Alert,
-  NativeModules
+  NativeModules,
+  Platform
 } from 'react-native';
 import { ChevronLeft, Fingerprint, Smile, ScanFace, Biohazard, User } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const { BiomatericModule } = NativeModules;
 import { getData } from '../Utils/storage';
 import PasswordLogin from './PasswordLogin';
+
 const Login = ({ navigation }) => {
   const [passwordlogin, setPasswordLogin] = useState(false);
    
@@ -39,7 +41,22 @@ const Login = ({ navigation }) => {
             if (!isEnabled) {
                 Alert.alert("Error", "Biometric is not available");
             }  
+            if(Platform.OS === 'ios'){
+              setTimeout(async () => {
+                
+             
+               const success = await BiomatericModule.showBiometricPrompt("Set up biometric authentication", "Use your fingerprint or face to secure your account");
+            if (success) {
+                navigation.replace('Home')
+                const value = BiomatericModule.getBiometricMethod();
+                await AsyncStorage.setItem('method', value);
+            } else {
+                Alert.alert("Error", "Failed to set up biometric authentication");
+            }
+            }, 400);
+            }
             setTimeout(async () => {
+            
                 const success = await BiomatericModule.showBiometricPrompt("Set up biometric authentication", "Use your fingerprint or face to secure your account");
             if (success) {
                 navigation.replace('Home')
