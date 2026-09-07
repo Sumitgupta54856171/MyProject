@@ -21,9 +21,10 @@ The app implements a simple but realistic **account and login flow**:
   - With **biometrics**, or
   - With **email + password**.
 - **Home**: Once authenticated, the user lands on a profile-style home screen that shows:
-  - Basic user information
-  - The active login method
+  - Basic user information (name, email)
+  - The active login method (e.g. Biometric + method type)
   - Options to **log out** or **delete the account**.
+  - > ⚠️ **Known issue**: The login timestamp (`loggingdate`) is saved to `AsyncStorage` at login time but is **not yet rendered** on the Home screen. The `lastLoginContainer` / `lastLoginTime` styles are defined but unused. See [Known Issues](#known-issues) below.
 
 > **Note**: This project is intended as an **educational/demo app**. It stores credentials locally with `AsyncStorage` and does **not** talk to any backend server. Do not use this setup as‑is in production.
 
@@ -63,33 +64,33 @@ The diagram below shows how a user moves through the app.
 
 ```mermaid
 flowchart TD
-    A[App launch] --> B{Existing user data<br/>in AsyncStorage?}
-    B -- No --> C[Sign Up screen<br/>(Sigin)]
+    A[App launch] --> B{Existing user data<br>in AsyncStorage?}
+    B -- No --> C["Sign Up screen (Sigin)"]
     B -- Yes --> D[Login screen]
 
-    C --> C1[Fill form<br/>name/email/password]
-    C1 --> C2[Optional: Enable biometric<br/>via BiometricToggle]
+    C --> C1["Fill form: name / email / password"]
+    C1 --> C2["Optional: Enable biometric via BiometricToggle"]
     C2 --> C3[Validate with Yup]
     C3 --> C4[Save userData to AsyncStorage]
     C4 --> D
 
     D --> E{Login method?}
-    E -- Biometric --> F[Check biometric flag<br/>+ availability]
+    E -- Biometric --> F["Check biometric flag + availability"]
     F --> G[Show native biometric prompt]
-    G -->|Success| H[Save userInfo<br/>(method, timestamp)]
+    G -->|Success| H["Save userInfo (method, timestamp)"]
     H --> I[Home screen]
     G -->|Fail| D
 
     E -- Password --> J[PasswordLogin screen]
-    J --> K[Read userData<br/>from AsyncStorage]
-    K --> L{Email & password match?}
+    J --> K[Read userData from AsyncStorage]
+    K --> L{Email and password match?}
     L -- Yes --> I
     L -- No --> D
 
     I --> M[Log Out]
     I --> N[Delete Account]
     M --> D
-    N --> O[Clear userData & userInfo] --> C
+    N --> O[Clear userData and userInfo] --> C
 ```
 
 ---
@@ -122,23 +123,27 @@ flowchart TD
   - If credentials match, navigates to `Home`.
 
 - **`UI/Home.tsx` (Homescreen)**
-  - Reads `userData` and `userInfo` (login method & last login time) from storage.
+  - Reads `userData` and `userInfo` (login method & login timestamp) from storage.
   - Displays:
     - User avatar (first letter of name)
     - Email
     - Current login method (e.g. Biometric + method type)
   - Actions:
-    - **Log Out** → removes login info and goes back to `Login`.
-    - **Delete Account** → clears stored user data and returns to `SignUp`.
+    - **Log Out** → removes `userInfo` from storage and goes back to `Login`.
+    - **Delete Account** → clears `userData`, `userInfo`, and `biometricEnabled`, then returns to `SignUp`.
   - Includes a **bottom navigation** and central biometric FAB.
+  - ⚠️ **Current bugs** (see [Known Issues](#known-issues)):
+    - Login timestamp (`loggingdate`) is saved but **never displayed**.
+    - Two stray `console.log(...)` calls are placed directly inside JSX (lines 98–101), which will cause a render error in release builds.
+    - `getData()` in `Utils/storage.tsx` takes no arguments, but is called as `getData("userData")` in `Home.tsx`.
 
 - **`UI/components/BiometricToggle.tsx`**
   - Reusable toggle card that visually explains biometric login.
   - Wraps a `Switch` and icon inside a card-style row.
 
 - **`Utils/storage.tsx`**
-  - `stooreData(value)` → stores minimal user profile in `AsyncStorage` under `userData`.
-  - `getData()` → reads and parses `userData` from `AsyncStorage`.
+  - `stooreData(value)` → stores minimal user profile (`name`, `email`, `password`) in `AsyncStorage` under the key `userData`.
+  - `getData()` → reads and parses `userData` from `AsyncStorage`. Takes **no arguments** (the `"userData"` key is hard-coded inside the function).
 
 ---
 
@@ -310,6 +315,34 @@ Once an iOS native module is in place, you can:
 3. **On the Home screen**
    - User sees their initials, name, email, and login method.
    - Can **Log Out** (return to Login) or **Delete Account** (clear local data).
+
+---
+
+## Known Issues
+
+These are bugs present in the current codebase that affect runtime behaviour:
+
+| # | File | Issue | Impact |
+|---|------|-------|--------|
+| 1 | `UI/Home.tsx` | **Login timestamp not displayed.** `loggingdate` is written to `AsyncStorage` (`userInfo`) in `Login.tsx` but the Home screen never reads or renders it. The `lastLoginContainer` / `lastLoginTime` styles are defined but orphaned. | "Last login" information is invisible to the user. |
+| 2 | `UI/Home.tsx` | **`console.log` calls inside JSX** (lines 98–101). Two logging statements are placed directly in the render tree rather than inside event handlers or `useEffect`. This causes a runtime error in production/release builds. | App may crash or behave incorrectly in release mode. |
+| 3 | `UI/Home.tsx` | **`getData()` called with an argument** (`getData("userData")`). The function signature in `Utils/storage.tsx` accepts no parameters; the key is hard-coded. The extra argument is silently ignored in JS, but it is misleading and inconsistent. | No runtime crash, but creates confusion and may break if the signature is ever updated. |
+| 4 | `UI/Home.tsx` | **`throw` followed by unreachable code**: `throw new Error(...)` is placed before `navigation.replace('Sigin')`, so the navigation call never executes. | When `userData` is null, the app stays on the Home screen instead of redirecting to Sign Up. |
+
+### Fix for Issue #1 — Display the login timestamp
+
+In `UI/Home.tsx`, add the timestamp display inside the `cardsContainer` block after the email card:
+
+```tsx
+{method?.loggingdate && (
+  <View style={styles.lastLoginContainer}>
+    <Text style={styles.lastLoginLabel}>Last login</Text>
+    <Text style={styles.lastLoginTime}>
+      {new Date(method.loggingdate).toLocaleString()}
+    </Text>
+  </View>
+)}
+```
 
 ---
 
