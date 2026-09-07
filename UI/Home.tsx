@@ -1,151 +1,163 @@
-import React, { useEffect,useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
   ScrollView,
-  StatusBar, 
-  NativeModules,
-  Alert
+  StatusBar,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { 
-  Smile, 
-  Mail, 
-  Edit2, 
-  LogOut, 
-  Trash2, 
-  Home, 
-  Fingerprint, 
-  Settings, 
-  CheckCircle2
+import type { NavigationProp } from '@react-navigation/native';
+import {
+  Smile,
+  Mail,
+  Edit2,
+  LogOut,
+  Trash2,
+  Home,
+  Fingerprint,
+  Settings,
+  CheckCircle2,
 } from 'lucide-react-native';
-import { stooreData,getData } from '../Utils/storage';
-import { get } from 'react-native/Libraries/NativeComponent/NativeComponentRegistry';
+import { getData } from '../Utils/storage';
 
+type UserData = { name: string; email: string };
+type UserInfo = { method: string; loggingdate: string };
 
+const Homescreen = ({ navigation }: { navigation: NavigationProp }) => {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [method, setmethod] = useState<UserInfo | null>(null);
 
-
-const Homescreen = ({ navigation }) => {
-    const [userData, setUserData] = useState(null);
-    const [method,setmethod] = useState(null);
-
-    useEffect(() =>{
-        const checkUser = async () => {
-            try {
-                const item = await getData("userData")
-                
-                const method = await AsyncStorage.getItem('userInfo');
-                if(item == null){
-                    throw new Error("No user data found");
-                    navigation.replace('Sigin');
-                }
-                setUserData(item);
-                setmethod(JSON.parse(method));
-                
-            } catch (error) {
-                console.log("Error checking biometric setup", error);   
-            }
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const item = await getData();
+        const info: string | null = await AsyncStorage.getItem('userInfo');
+        if (item == null) {
+          navigation.replace('SignUp');
+          return;
         }
+        setUserData(item);
+        setmethod(info ? JSON.parse(info) : null);
+      } catch (error) {
+        console.log('Error loading user data', error);
+      }
+    };
     checkUser();
-    },[])
-   const handledelete = async () => {
+  }, []);
+
+  const handledelete = async () => {
     try {
-        await AsyncStorage.removeItem('userData');
-        await AsyncStorage.removeItem('userInfo');
-        await AsyncStorage.removeItem('biometricEnabled');
-        navigation.replace('SignUp');
-         Alert.alert("Success", "User data deleted successfully");
-        
-    }catch(error){
-        Alert.alert("Error", "Failed to delete user data");
+      await AsyncStorage.removeItem('userData');
+      await AsyncStorage.removeItem('userInfo');
+      await AsyncStorage.removeItem('biometricEnabled');
+      navigation.replace('SignUp');
+      Alert.alert('Success', 'User data deleted successfully');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete user data');
     }
-   }
-    const handlelogout = async () =>{
-        try{
-            
-            await AsyncStorage.removeItem('userInfo');
-       
-            navigation.replace('Login');
+  };
 
-        }catch(error){
-            Alert.alert("Error", "Failed to log out");
-        }
+  const handlelogout = async () => {
+    try {
+      await AsyncStorage.removeItem('userInfo');
+      navigation.replace('Login');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to log out');
     }
-
-
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
         {/* Profile Avatar Section */}
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>{userData?.name?.charAt(0).toUpperCase() || "U"}</Text>
-            {/* Success Badge */}
+            <Text style={styles.avatarText}>
+              {userData?.name?.charAt(0).toUpperCase() || 'U'}
+            </Text>
             <View style={styles.badgeContainer}>
               <CheckCircle2 color="#22C55E" fill="#FFFFFF" size={24} />
             </View>
           </View>
-          <Text style={styles.greetingTitle}>Welcome back, {userData?.name || "User"}</Text>
-          <Text style={styles.greetingSubtitle}>Manage your secure identity</Text>
+          <Text style={styles.greetingTitle}>
+            Welcome back, {userData?.name || 'User'}
+          </Text>
+          <Text style={styles.greetingSubtitle}>
+            Manage your secure identity
+          </Text>
         </View>
-console.log("check native module",BiomatericModule.getBiometricMethod());
-          coonsole.log("show the data of the method",method)
+
         <View style={styles.cardsContainer}>
-          console.log("User data from storage", userData);
-          
-          <TouchableOpacity style={[styles.card, styles.biometricCard]} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={[styles.card, styles.biometricCard]}
+            activeOpacity={0.7}>
             <View style={styles.cardIconContainer}>
               <Smile color="#1C77F2" size={24} />
             </View>
             <View style={styles.cardTextContent}>
               <Text style={styles.cardLabel}>LOGIN METHOD</Text>
-              <Text style={styles.cardValue}>Biometric ({method?.method})</Text>
+              <Text style={styles.cardValue}>
+                Biometric ({method?.method})
+              </Text>
             </View>
             <View style={styles.verifiedBadge}>
-               <CheckCircle2 color="#22C55E" size={20} />
+              <CheckCircle2 color="#22C55E" size={20} />
             </View>
           </TouchableOpacity>
 
-          
           <TouchableOpacity style={styles.card} activeOpacity={0.7}>
-            <View style={[styles.cardIconContainer, { backgroundColor: '#F1F5F9' }]}>
+            <View
+              style={[styles.cardIconContainer, { backgroundColor: '#F1F5F9' }]}>
               <Mail color="#475569" size={24} />
             </View>
             <View style={styles.cardTextContent}>
               <Text style={styles.cardLabel}>EMAIL ADDRESS</Text>
-              <Text style={styles.cardValue}>{userData?.email || "john.doe@example.com"}</Text>
+              <Text style={styles.cardValue}>
+                {userData?.email || 'john.doe@example.com'}
+              </Text>
             </View>
             <Edit2 color="#94A3B8" size={18} />
           </TouchableOpacity>
 
+          {/* Last login timestamp */}
+          {method?.loggingdate && (
+            <View style={styles.lastLoginContainer}>
+              <Text style={styles.lastLoginLabel}>Last login</Text>
+              <Text style={styles.lastLoginTime}>
+                {new Date(method.loggingdate).toLocaleString()}
+              </Text>
+            </View>
+          )}
         </View>
-
-        
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handlelogout} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handlelogout}
+            activeOpacity={0.7}>
             <LogOut color="#EF4444" size={20} style={styles.buttonIcon} />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.deleteButton} onPress={handledelete} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handledelete}
+            activeOpacity={0.8}>
             <Trash2 color="#FFFFFF" size={20} style={styles.buttonIcon} />
             <Text style={styles.deleteText}>Delete Account</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Version Info */}
         <Text style={styles.versionText}>Version 2.4.0 (Build 202)</Text>
-        
-        {/* Spacer to ensure bottom content isn't hidden behind navigation */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -158,7 +170,6 @@ console.log("check native module",BiomatericModule.getBiometricMethod());
           <Text style={styles.activeNavText}>Home</Text>
         </TouchableOpacity>
 
-        {/* Center Floating Action Button (FAB) */}
         <View style={styles.fabContainer}>
           <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
             <Fingerprint color="#FFFFFF" size={28} />
@@ -170,7 +181,6 @@ console.log("check native module",BiomatericModule.getBiometricMethod());
           <Text style={styles.inactiveNavText}>Settings</Text>
         </TouchableOpacity>
       </View>
-
     </SafeAreaView>
   );
 };
@@ -232,12 +242,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#F1F5F9',
-    // Shadow for iOS
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 8,
-    // Elevation for Android
     elevation: 2,
   },
   biometricCard: {
@@ -319,7 +327,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     backgroundColor: '#EF4444',
-    // Shadow
     shadowColor: '#EF4444',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -375,7 +382,7 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'relative',
-    top: -25, // Pops the button out of the nav bar
+    top: -25,
   },
   fab: {
     width: 64,
@@ -384,7 +391,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
-    // Shadow
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

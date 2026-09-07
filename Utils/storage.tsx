@@ -1,18 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
-const stooreData = async (value: any) => {
-    try {
-        const userData = {
-            name: value.name,
-            email: value.email,
-            password: value.password
-        };
-        await AsyncStorage.setItem('userData', JSON.stringify(userData));
-    } catch (error) {
-        console.log(error);
-    }
-}
+const storeData = async (value: any) => {
+    const userData = {
+        name: value.name,
+        email: value.email,
+        password: value.password,
+    };
+    await AsyncStorage.setItem('userData', JSON.stringify(userData));
+};
 
 const getData = async () => {
     try {
@@ -20,9 +15,11 @@ const getData = async () => {
         if (value !== null) {
             return JSON.parse(value);
         }
+        return null;
     } catch (error) {
         console.log(error);
+        return null;
     }
-}
+};
 
-export { stooreData, getData };
+export { storeData, getData };

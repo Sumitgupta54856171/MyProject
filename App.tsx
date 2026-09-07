@@ -6,16 +6,16 @@
  */
 
 import Sigin from './UI/Sigin';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import { StatusBar, useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import Homescreen from './UI/Home';
 import Login from './UI/Login';
+
+// Stack must be declared before it is used in JSX
+const Stack = createNativeStackNavigator();
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -24,18 +24,14 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <NavigationContainer>
-      <Stack.Navigator initialRouteName="SignUp">
-        {/* ✅ Screen ka naam 'Login' hona zaroori hai */}
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="SignUp" component={Sigin} />
-        <Stack.Screen name="Home" component={Homescreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+        <Stack.Navigator initialRouteName="SignUp">
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="SignUp" component={Sigin} />
+          <Stack.Screen name="Home" component={Homescreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }
-
-const Stack = createNativeStackNavigator();
-
 
 export default App;

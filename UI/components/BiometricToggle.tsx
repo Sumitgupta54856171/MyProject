@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 import { Fingerprint } from 'lucide-react-native';
 
-const BiometricToggle = ({isEnabled, toggleSwitch}) => {
+const BiometricToggle = ({
+  isEnabled,
+  toggleSwitch,
+}: {
+  isEnabled: boolean;
+  toggleSwitch: () => void;
+}) => {
   return (
     <View style={[styles.container, {marginBottom: 20}]}>
       <TouchableOpacity 
@@ -35,8 +41,6 @@ const BiometricToggle = ({isEnabled, toggleSwitch}) => {
     </View>
   );
 };
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
